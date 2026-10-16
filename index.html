@@ -3,6 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#A63A2E">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>信用卡權益決策站</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -72,6 +78,7 @@ tailwind.config = {
       <p class="font-type text-xs opacity-80" x-text="benefits ? 'updated ' + benefits.last_checked.replace('T',' ').slice(0,16) : 'loading…'"></p>
     </div>
     <div class="flex gap-2 text-sm font-kai">
+      <button x-show="canInstall" @click="installApp()" class="bg-[#F2DC5D] text-[#3B2F25] font-bold rounded px-3 py-2">＋ 安裝 App</button>
       <button @click="refresh()" class="bg-[#FBF7EC]/15 hover:bg-[#FBF7EC]/25 rounded px-3 py-2">↻ 重新整理</button>
     </div>
   </div>
@@ -180,7 +187,7 @@ tailwind.config = {
         <h2 class="font-disp font-bold">當月記帳</h2>
         <p class="text-sm text-ink2">記帳月份：<span class="font-type" x-text="state ? state.monthly_ledger.current_month : ''"></span></p>
       </div>
-      <div class="flex gap-2 items-center">
+      <div class="flex gap-2 items-center flex-wrap">
         <input type="month" x-model="resetMonth" class="field text-sm px-2 py-1.5">
         <button @click="resetMonth_()" class="btn-kraft text-sm px-3 py-1.5">歸零</button>
       </div>
@@ -242,24 +249,23 @@ tailwind.config = {
       <h2 class="font-disp font-bold mb-2">我的卡片</h2>
       <ul class="divide-y divide-dashed divide-line">
         <template x-for="c in (state ? state.active_cards : [])" :key="c.card_id">
-          <li class="py-2 flex items-center justify-between gap-2">
-            <div class="flex-1 min-w-0 space-y-1.5">
-              <div class="flex gap-1.5">
-                <input x-model="c.bank" @change="saveState()" placeholder="銀行" class="field w-24 shrink-0 px-2 py-1.5 text-sm">
-                <input x-model="c.name" @change="saveState()" placeholder="卡名" class="field flex-1 min-w-0 px-2 py-1.5 text-sm font-bold">
-              </div>
-              <div class="flex items-center gap-1 text-xs text-ink3">
-                結帳日 <input x-model.number="c.statement_day" @change="saveState()" type="number" class="field w-14 px-2 py-1 font-type"> 號
-              </div>
+          <li class="py-2.5 space-y-2">
+            <div class="flex gap-1.5">
+              <input x-model="c.bank" @change="saveState()" placeholder="銀行" class="field w-24 shrink-0 px-2 py-2 text-sm">
+              <input x-model="c.name" @change="saveState()" placeholder="卡名" class="field flex-1 min-w-0 px-2 py-2 text-sm font-bold">
             </div>
-            <div class="flex items-center gap-2 shrink-0">
+            <div class="flex items-center gap-2">
+              <span class="flex items-center gap-1 text-xs text-ink3">
+                結帳日 <input x-model.number="c.statement_day" @change="saveState()" type="number" class="field w-14 px-2 py-1.5 font-type"> 號
+              </span>
+              <span class="flex-1"></span>
               <button @click="c.enabled = !c.enabled; saveState()"
                 :style="'background:' + (c.enabled ? '#2F6B4F' : '#DCCFB8')"
-                class="relative w-11 h-6 rounded-full transition">
+                class="relative w-11 h-6 rounded-full transition shrink-0" :aria-label="c.enabled ? '停用' : '啟用'">
                 <span class="absolute top-0.5 w-5 h-5 bg-[#FBF7EC] rounded-full shadow transition-all"
                   :class="c.enabled ? 'left-[22px]' : 'left-0.5'"></span>
               </button>
-              <button @click="delCard(c.card_id)" class="text-seal text-xs underline underline-offset-2">刪除</button>
+              <button @click="delCard(c.card_id)" class="text-seal text-xs underline underline-offset-2 shrink-0">刪除</button>
             </div>
           </li>
         </template>
@@ -305,13 +311,29 @@ function app() {
     merchantQuery: '', merchantHits: [], merchant: null, highlightPool: null,
     ledgerInputs: {}, ledgerMerchants: {}, resetMonth: '',
     newCard: { bank: '', name: '', statement_day: '' },
-    tiersDraft: {}, showChangelog: false,
+    tiersDraft: {}, showChangelog: false, canInstall: false,
     toastMsg: '', toastTimer: null,
 
     async init() {
       await this.loadData();
       this.resetMonth = this.state ? this.state.monthly_ledger.current_month : '';
       if (this.state) this.tiersDraft = JSON.parse(JSON.stringify(this.state.profile.bank_tiers));
+      if ('serviceWorker' in navigator) {
+        try { await navigator.serviceWorker.register('./sw.js'); } catch (e) { /* 離線功能不可用不影響使用 */ }
+      }
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        this._installPrompt = e;
+        this.canInstall = true;
+      });
+    },
+
+    async installApp() {
+      if (!this._installPrompt) return;
+      this._installPrompt.prompt();
+      await this._installPrompt.userChoice;
+      this._installPrompt = null;
+      this.canInstall = false;
     },
 
     toast(msg) {

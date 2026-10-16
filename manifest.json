@@ -1,0 +1,1 @@
+{"background_color":"#F6F1E3","description":"信用卡權益自動巡檢與刷卡決策小助手","display":"standalone","icons":[{"sizes":"192x192","src":"icons/icon-192.png","type":"image/png"},{"purpose":"any maskable","sizes":"512x512","src":"icons/icon-512.png","type":"image/png"}],"name":"刷卡小助手","orientation":"portrait","scope":"./","short_name":"刷卡助手","start_url":"./","theme_color":"#A63A2E"}
