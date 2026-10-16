@@ -73,7 +73,6 @@ tailwind.config = {
     </div>
     <div class="flex gap-2 text-sm font-kai">
       <button @click="refresh()" class="bg-[#FBF7EC]/15 hover:bg-[#FBF7EC]/25 rounded px-3 py-2">↻ 重新整理</button>
-      <button @click="showSettings = true" class="bg-[#FBF7EC]/15 hover:bg-[#FBF7EC]/25 rounded px-3 py-2">⚙️ 連線</button>
     </div>
   </div>
   <nav class="max-w-2xl mx-auto px-4 flex gap-5 text-[15px]">
@@ -98,6 +97,25 @@ tailwind.config = {
 
   <!-- ============ 試算 ============ -->
   <section x-show="tab==='calc'" class="space-y-5">
+    <div class="jcard tape-d p-4">
+      <h2 class="font-disp font-bold mb-2">搜尋店家 <span class="text-xs font-kai font-normal text-ink3">（知道要去哪就直接搜）</span></h2>
+      <div class="relative">
+        <input x-model="merchantQuery" @input="searchMerchant()" placeholder="例如：星巴克" class="field w-full px-4 py-3">
+        <div x-show="merchantHits.length" class="absolute z-10 w-full jcard mt-1 max-h-56 overflow-auto p-0">
+          <template x-for="m in merchantHits" :key="m.keyword">
+            <button @click="pickMerchant(m)" class="w-full text-left px-4 py-2.5 hover:bg-line2 border-b border-dashed border-line">
+              <span class="font-bold" x-text="m.name"></span>
+              <span class="text-xs text-ink3 block" x-text="m.note"></span>
+            </button>
+          </template>
+        </div>
+      </div>
+      <div x-show="merchant" class="mt-2 text-sm rounded p-2 flex justify-between items-center gap-2" style="background:#F2DC5D33;border:1px dashed #B98F63">
+        <span x-text="merchant ? merchant.name + ' → ' + merchant.note : ''"></span>
+        <button @click="clearMerchant()" class="text-xs underline underline-offset-2 text-pen shrink-0">清除</button>
+      </div>
+      <p class="text-xs text-ink3 mt-2">搜尋結果僅供參考，以各銀行公告為準；找不到就用下面的情境試算。</p>
+    </div>
     <div class="jcard tape-a p-4">
       <h2 class="font-disp font-bold mb-2">1. 選擇消費情境</h2>
       <div class="flex flex-wrap gap-2">
@@ -129,6 +147,7 @@ tailwind.config = {
             <div class="min-w-0">
               <div class="text-xs text-ink3">
                 <span class="stamp" x-show="i===0">推</span>
+                <span class="stamp" x-show="r.pool.pool_id === highlightPool" style="border-color:#2B4A86;color:#2B4A86">店家推薦</span>
                 <span x-text="'第 ' + (i+1) + ' 順位・' + r.pool.card_name"></span>
               </div>
               <div class="font-bold mt-1" x-text="r.pool.pool_name"></div>
@@ -224,9 +243,14 @@ tailwind.config = {
       <ul class="divide-y divide-dashed divide-line">
         <template x-for="c in (state ? state.active_cards : [])" :key="c.card_id">
           <li class="py-2 flex items-center justify-between gap-2">
-            <div class="text-sm min-w-0">
-              <div class="font-bold" x-text="c.bank + '・' + c.name"></div>
-              <div class="font-type text-xs text-ink3" x-text="'結帳日 ' + c.statement_day + ' 號'"></div>
+            <div class="flex-1 min-w-0 space-y-1.5">
+              <div class="flex gap-1.5">
+                <input x-model="c.bank" @change="saveState()" placeholder="銀行" class="field w-24 shrink-0 px-2 py-1.5 text-sm">
+                <input x-model="c.name" @change="saveState()" placeholder="卡名" class="field flex-1 min-w-0 px-2 py-1.5 text-sm font-bold">
+              </div>
+              <div class="flex items-center gap-1 text-xs text-ink3">
+                結帳日 <input x-model.number="c.statement_day" @change="saveState()" type="number" class="field w-14 px-2 py-1 font-type"> 號
+              </div>
             </div>
             <div class="flex items-center gap-2 shrink-0">
               <button @click="c.enabled = !c.enabled; saveState()"
@@ -248,7 +272,7 @@ tailwind.config = {
           <input x-model.number="newCard.statement_day" type="number" placeholder="結帳日" class="field w-20 px-3 py-2 text-sm font-type">
         </div>
         <button @click="addCard()" class="btn-seal text-sm px-4 py-2 font-bold">＋ 新增</button>
-        <p class="text-xs text-ink3">新增卡片後，隔天 09:00 排程會自動把它納入權益巡檢並補上加碼池。</p>
+        <p class="text-xs text-ink3">卡片資料改完就存在這台裝置；加卡、刪卡或改銀行等級後跟我說一聲，我幫你同步到雲端，隔天 09:00 排程才會用新設定巡檢。</p>
       </div>
     </div>
 
@@ -267,29 +291,6 @@ tailwind.config = {
 
 </main>
 
-<!-- 設定視窗 -->
-<div x-show="showSettings" class="fixed inset-0 z-30 flex items-end sm:items-center justify-center" x-cloak>
-  <div class="absolute inset-0 bg-[#3B2F25]/50" @click="showSettings = false"></div>
-  <div class="jcard tape-b relative w-full sm:max-w-md p-5 space-y-3" style="border-radius:6px">
-    <h2 class="font-disp font-bold text-lg">⚙️ GitHub 連線設定</h2>
-    <p class="text-xs text-ink2">輸入一次即可，token 只存在這台裝置的瀏覽器裡，不會上傳到任何地方。需要 Contents 讀寫權限的 fine-grained token。</p>
-    <label class="block text-sm">Owner
-      <input x-model="settings.owner" class="field mt-1 w-full px-3 py-2">
-    </label>
-    <label class="block text-sm">Repo
-      <input x-model="settings.repo" class="mt-1 w-full field px-3 py-2">
-    </label>
-    <label class="block text-sm">Personal Access Token
-      <input x-model="settings.token" type="password" class="field mt-1 w-full px-3 py-2 font-type" placeholder="github_pat_...">
-    </label>
-    <div class="flex gap-2">
-      <button @click="saveSettings()" class="btn-seal flex-1 px-4 py-2 font-bold">儲存</button>
-      <button @click="testConn()" class="btn-kraft flex-1 px-4 py-2">測試連線</button>
-      <button @click="showSettings = false" class="px-4 py-2 text-ink3">關閉</button>
-    </div>
-  </div>
-</div>
-
 <!-- 提示 -->
 <div x-show="toastMsg" x-transition class="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 text-sm px-4 py-2.5 max-w-[90%] jcard tape-a font-kai" x-text="toastMsg" x-cloak></div>
 
@@ -297,26 +298,17 @@ tailwind.config = {
 const SCENARIOS = ['新加坡實體','日本實體','韓國實體','歐美實體','國內一般','國外一般','國內網購','餐廳聚餐','旅遊訂房','行動支付'];
 const OVERSEAS = ['新加坡實體','日本實體','韓國實體','歐美實體','國外一般'];
 
-function toB64(str) {
-  const bytes = new TextEncoder().encode(str);
-  let bin = '';
-  bytes.forEach(b => bin += String.fromCharCode(b));
-  return btoa(bin);
-}
-
 function app() {
   return {
-    tab: 'calc', state: null, benefits: null,
+    tab: 'calc', state: null, benefits: null, merchants: null,
     scenario: '新加坡實體', amount: '', deductFee: true, results: [],
+    merchantQuery: '', merchantHits: [], merchant: null, highlightPool: null,
     ledgerInputs: {}, ledgerMerchants: {}, resetMonth: '',
     newCard: { bank: '', name: '', statement_day: '' },
-    tiersDraft: {}, showSettings: false, showChangelog: false,
-    settings: { owner: 'waltwait', repo: 'credit-card-hub', token: '' },
+    tiersDraft: {}, showChangelog: false,
     toastMsg: '', toastTimer: null,
 
     async init() {
-      const saved = localStorage.getItem('cc_hub_settings');
-      if (saved) this.settings = JSON.parse(saved);
       await this.loadData();
       this.resetMonth = this.state ? this.state.monthly_ledger.current_month : '';
       if (this.state) this.tiersDraft = JSON.parse(JSON.stringify(this.state.profile.bank_tiers));
@@ -331,19 +323,20 @@ function app() {
     async loadData() {
       try {
         const t = Date.now();
-        const [s, b] = await Promise.all([
+        const [s, b, m] = await Promise.all([
           fetch('./data/user_state.json?t=' + t).then(r => r.json()),
-          fetch('./data/benefits_db.json?t=' + t).then(r => r.json())
+          fetch('./data/benefits_db.json?t=' + t).then(r => r.json()),
+          fetch('./data/merchants.json?t=' + t).then(r => r.json()).catch(() => [])
         ]);
-        const draft = localStorage.getItem('cc_hub_state_draft');
-        if (draft) {
-          const d = JSON.parse(draft);
-          if (d.last_modified > s.last_modified) {
-            this.state = d;
-            this.toast('載入了本機未同步的變更，記得按連線設定同步');
-          } else this.state = s;
-        } else this.state = s;
         this.benefits = b;
+        this.merchants = m;
+        const local = localStorage.getItem('cc_hub_local');
+        if (local) {
+          this.state = JSON.parse(local);
+        } else {
+          this.state = s;
+          localStorage.setItem('cc_hub_local', JSON.stringify(s));
+        }
         this.tiersDraft = JSON.parse(JSON.stringify(this.state.profile.bank_tiers));
       } catch (e) {
         this.toast('讀取資料失敗：' + e.message);
@@ -464,53 +457,36 @@ function app() {
       await this.saveState();
     },
 
+    searchMerchant() {
+      const q = this.merchantQuery.trim();
+      if (!q) { this.merchantHits = []; return; }
+      this.merchantHits = (this.merchants || [])
+        .filter(m => m.keyword.includes(q) || m.name.includes(q) || q.includes(m.keyword))
+        .slice(0, 8);
+    },
+
+    pickMerchant(m) {
+      this.merchant = m;
+      this.merchantQuery = m.name;
+      this.merchantHits = [];
+      this.scenario = m.scenario;
+      this.highlightPool = m.pool_id;
+      if (Number(this.amount) > 0) this.calculate();
+      else this.toast('已選定「' + m.name + '」，輸入金額後按試算');
+    },
+
+    clearMerchant() {
+      this.merchant = null;
+      this.highlightPool = null;
+      this.merchantQuery = '';
+      this.merchantHits = [];
+    },
+
     async saveState() {
       this.state.last_modified = new Date().toISOString();
-      localStorage.setItem('cc_hub_state_draft', JSON.stringify(this.state));
-      if (!this.settings.token) {
-        this.toast('已暫存本機，設定 GitHub 連線後會自動同步');
-        return;
-      }
-      try {
-        await this.ghPut('data/user_state.json', this.state);
-        localStorage.removeItem('cc_hub_state_draft');
-        this.toast('已同步到 GitHub ✓');
-      } catch (e) {
-        this.toast('同步失敗，已暫存本機：' + e.message);
-      }
+      localStorage.setItem('cc_hub_local', JSON.stringify(this.state));
+      this.toast('已儲存 ✓');
     },
-
-    async ghPut(path, obj) {
-      const s = this.settings;
-      const url = 'https://api.github.com/repos/' + s.owner + '/' + s.repo + '/contents/' + path;
-      const headers = { 'Authorization': 'Bearer ' + s.token, 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json' };
-      let sha = null;
-      const get = await fetch(url, { headers });
-      if (get.ok) sha = (await get.json()).sha;
-      const body = { message: 'chore: 更新 user_state.json（網頁）', content: toB64(JSON.stringify(obj, null, 2)) };
-      if (sha) body.sha = sha;
-      const put = await fetch(url, { method: 'PUT', headers, body: JSON.stringify(body) });
-      if (!put.ok) {
-        const t = await put.text();
-        throw new Error(put.status + ' ' + t.slice(0, 120));
-      }
-    },
-
-    saveSettings() {
-      localStorage.setItem('cc_hub_settings', JSON.stringify(this.settings));
-      this.showSettings = false;
-      this.toast('連線設定已儲存');
-    },
-
-    async testConn() {
-      const s = this.settings;
-      if (!s.token) { this.toast('請先填 token'); return; }
-      try {
-        const r = await fetch('https://api.github.com/repos/' + s.owner + '/' + s.repo,
-          { headers: { 'Authorization': 'Bearer ' + s.token, 'Accept': 'application/vnd.github+json' } });
-        this.toast(r.ok ? '連線成功 ✓' : '連線失敗：' + r.status);
-      } catch (e) { this.toast('連線失敗：' + e.message); }
-    }
   };
 }
 </script>
