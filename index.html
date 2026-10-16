@@ -4,158 +4,212 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>信用卡權益決策站</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Noto+Serif+TC:wght@400;700&family=LXGW+WenKai+TC:wght@400;700&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: { extend: {
+    colors: {
+      paper:'#F3ECDC', card:'#FBF7EC', kraft:'#B98F63',
+      ink:'#3B2F25', ink2:'#66564A', ink3:'#8F7E6B',
+      line:'#DCCFB8', line2:'#E9E0CD',
+      seal:'#B3301F', sealdim:'#F1DDD2',
+      pen:'#2B4A86', pendim:'#E0E2E8',
+      leaf:'#2F6B4F', plum:'#6E3B6E',
+      hi:'#F2DC5D', hidark:'#4A3A00',
+      tape1:'#E0B24A', tape2:'#DB9A95', tape3:'#9DB592'
+    },
+    fontFamily: {
+      disp:['"Young Serif"','"Noto Serif TC"','serif'],
+      kai:['"LXGW WenKai TC"','"Noto Serif TC"','serif'],
+      type:['"Courier Prime"','monospace']
+    }
+  } }
+}
+</script>
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 <style>
-  body { -webkit-tap-highlight-color: transparent; }
-  .chip-active { background:#4f46e5 !important; color:#fff !important; border-color:#4f46e5 !important; }
-  [x-cloak] { display:none !important; }
+  body{
+    background-color:#F3ECDC;
+    background-image:radial-gradient(rgba(59,47,37,.13) 1px, transparent 1.3px);
+    background-size:22px 22px;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .jcard{
+    position:relative;background:#FBF7EC;border:1px solid #DCCFB8;border-radius:3px;
+    box-shadow:0 1px 0 #DCCFB8;
+  }
+  .jcard::before{
+    content:"";position:absolute;top:-12px;left:50%;width:108px;height:24px;
+    transform:translateX(-50%) rotate(-4deg);opacity:.7;background:var(--tape,#E0B24A);
+    clip-path:polygon(1% 12%, 4% 2%, 96% 0, 99% 10%, 100% 88%, 97% 100%, 3% 98%, 0 90%);
+    pointer-events:none;
+  }
+  .tape-a{--tape:#E0B24A}.tape-b{--tape:#DB9A95}.tape-c{--tape:#9DB592}.tape-d{--tape:#B98F63}
+  .stamp{
+    display:inline-block;border:2px double #B3301F;color:#B3301F;border-radius:3px;
+    transform:rotate(-3deg);padding:0 .45em;font-size:11px;line-height:1.7;white-space:nowrap;
+  }
+  .chip{border:1px solid #DCCFB8;background:#FBF7EC;color:#3B2F25;}
+  .chip-on{background:#B3301F !important;color:#FBF7EC !important;border-color:#B3301F !important;}
+  .btn-seal{background:#B3301F;color:#FBF7EC;border-radius:3px;}
+  .btn-seal:active{transform:translateY(1px);}
+  .btn-kraft{background:#B98F63;color:#FBF7EC;border-radius:3px;}
+  .field{background:#fffdf6;border:1px solid #DCCFB8;border-radius:3px;color:#3B2F25;}
+  .field:focus{outline:2px solid #B98F63;outline-offset:0;}
+  [x-cloak]{display:none !important;}
 </style>
 </head>
-<body class="bg-slate-100 text-slate-800 min-h-screen" x-data="app()" x-init="init()" x-cloak>
+<body class="text-ink font-kai min-h-screen" x-data="app()" x-init="init()" x-cloak>
 
 <!-- 頂欄 -->
-<header class="bg-indigo-700 text-white sticky top-0 z-20 shadow">
-  <div class="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between gap-2">
+<header class="bg-seal text-[#FBF7EC] sticky top-0 z-20" style="box-shadow:0 2px 0 rgba(59,47,37,.25)">
+  <div class="max-w-2xl mx-auto px-4 pt-3 pb-1 flex items-center justify-between gap-2">
     <div>
-      <h1 class="text-lg font-bold leading-tight">💳 信用卡權益決策站</h1>
-      <p class="text-xs text-indigo-200" x-text="benefits ? '權益更新：' + benefits.last_checked.replace('T',' ').slice(0,16) : '載入中…'"></p>
+      <h1 class="font-disp text-xl leading-tight">💳 信用卡權益決策站</h1>
+      <p class="font-type text-xs opacity-80" x-text="benefits ? 'updated ' + benefits.last_checked.replace('T',' ').slice(0,16) : 'loading…'"></p>
     </div>
-    <div class="flex gap-2">
-      <button @click="refresh()" class="text-sm bg-indigo-600 hover:bg-indigo-500 rounded-lg px-3 py-2">↻ 重新整理</button>
-      <button @click="showSettings = true" class="text-sm bg-indigo-600 hover:bg-indigo-500 rounded-lg px-3 py-2">⚙️ 連線</button>
+    <div class="flex gap-2 text-sm font-kai">
+      <button @click="refresh()" class="bg-[#FBF7EC]/15 hover:bg-[#FBF7EC]/25 rounded px-3 py-2">↻ 重新整理</button>
+      <button @click="showSettings = true" class="bg-[#FBF7EC]/15 hover:bg-[#FBF7EC]/25 rounded px-3 py-2">⚙️ 連線</button>
     </div>
   </div>
-  <!-- 分頁 -->
-  <nav class="max-w-2xl mx-auto px-4 pb-2 flex gap-2 text-sm">
-    <button @click="tab='calc'" :class="tab==='calc' ? 'bg-white text-indigo-700' : 'bg-indigo-600 text-white'" class="flex-1 rounded-lg px-3 py-2 font-bold">試算</button>
-    <button @click="tab='ledger'" :class="tab==='ledger' ? 'bg-white text-indigo-700' : 'bg-indigo-600 text-white'" class="flex-1 rounded-lg px-3 py-2 font-bold">額度記帳</button>
-    <button @click="tab='cards'" :class="tab==='cards' ? 'bg-white text-indigo-700' : 'bg-indigo-600 text-white'" class="flex-1 rounded-lg px-3 py-2 font-bold">卡片管理</button>
+  <nav class="max-w-2xl mx-auto px-4 flex gap-5 text-[15px]">
+    <button @click="tab='calc'" class="pb-2 border-b-[3px]"
+      :class="tab==='calc' ? 'border-tape1 font-bold' : 'border-transparent opacity-70'">試算</button>
+    <button @click="tab='ledger'" class="pb-2 border-b-[3px]"
+      :class="tab==='ledger' ? 'border-tape2 font-bold' : 'border-transparent opacity-70'">額度記帳</button>
+    <button @click="tab='cards'" class="pb-2 border-b-[3px]"
+      :class="tab==='cards' ? 'border-tape3 font-bold' : 'border-transparent opacity-70'">卡片管理</button>
   </nav>
 </header>
 
-<main class="max-w-2xl mx-auto px-4 py-4 pb-24">
+<main class="max-w-2xl mx-auto px-4 py-5 pb-24">
 
   <!-- 變動紀錄 -->
   <div class="mb-4" x-show="benefits">
-    <button @click="showChangelog = !showChangelog" class="text-sm text-indigo-700 underline">📋 權益變動紀錄（<span x-text="benefits.changelog.length"></span>）</button>
-    <ul x-show="showChangelog" class="mt-2 text-sm bg-white rounded-xl p-3 space-y-1 shadow">
-      <template x-for="c in benefits.changelog" :key="c"><li class="border-b border-slate-100 pb-1" x-text="c"></li></template>
+    <button @click="showChangelog = !showChangelog" class="text-sm text-pen underline underline-offset-2">📋 權益變動紀錄（<span x-text="benefits.changelog.length"></span>）</button>
+    <ul x-show="showChangelog" class="mt-2 text-sm jcard tape-d p-3 space-y-1">
+      <template x-for="c in benefits.changelog" :key="c"><li class="border-b border-dashed border-line pb-1" x-text="c"></li></template>
     </ul>
   </div>
 
   <!-- ============ 試算 ============ -->
-  <section x-show="tab==='calc'" class="space-y-4">
-    <div class="bg-white rounded-2xl p-4 shadow">
-      <h2 class="font-bold mb-2">1. 選擇消費情境</h2>
+  <section x-show="tab==='calc'" class="space-y-5">
+    <div class="jcard tape-a p-4">
+      <h2 class="font-disp font-bold mb-2">1. 選擇消費情境</h2>
       <div class="flex flex-wrap gap-2">
         <template x-for="s in SCENARIOS" :key="s">
-          <button @click="scenario = s" :class="scenario===s ? 'chip-active' : ''"
-            class="text-sm border border-slate-300 rounded-full px-3 py-1.5 bg-slate-50" x-text="s"></button>
+          <button @click="scenario = s" :class="scenario===s ? 'chip-on' : ''"
+            class="chip text-sm rounded-full px-3 py-1.5" x-text="s"></button>
         </template>
       </div>
     </div>
 
-    <div class="bg-white rounded-2xl p-4 shadow space-y-3">
-      <h2 class="font-bold">2. 輸入金額</h2>
+    <div class="jcard tape-b p-4 space-y-3">
+      <h2 class="font-disp font-bold">2. 輸入金額</h2>
       <div class="flex gap-2">
         <input x-model.number="amount" type="number" min="0" inputmode="numeric" placeholder="例如 12000"
-          class="flex-1 text-xl border border-slate-300 rounded-xl px-4 py-3">
-        <button @click="calculate()" class="bg-indigo-600 text-white font-bold rounded-xl px-6 text-lg">試算</button>
+          class="field flex-1 min-w-0 font-type text-xl px-4 py-3">
+        <button @click="calculate()" class="btn-seal font-bold px-6 text-lg shrink-0">試算</button>
       </div>
-      <label class="flex items-center gap-2 text-sm">
-        <input type="checkbox" x-model="deductFee" class="w-4 h-4">
+      <label class="flex items-center gap-2 text-sm text-ink2">
+        <input type="checkbox" x-model="deductFee" class="w-4 h-4 accent-[#B3301F]">
         海外消費扣除 1.5% 手續費後再比較
       </label>
     </div>
 
-    <div x-show="results.length" class="space-y-3">
-      <h2 class="font-bold">推薦順序（依預估實拿排序）</h2>
+    <div x-show="results.length" class="space-y-5">
+      <h2 class="font-disp font-bold text-lg">推薦順序 <span class="text-sm font-kai text-ink3">（依預估實拿排序）</span></h2>
       <template x-for="(r, i) in results" :key="r.pool.pool_id">
-        <div class="bg-white rounded-2xl p-4 shadow" :class="i===0 ? 'ring-2 ring-indigo-500' : ''">
+        <div class="jcard p-4" :class="['tape-a','tape-b','tape-c','tape-d'][i % 4]">
           <div class="flex items-start justify-between gap-2">
             <div class="min-w-0">
-              <div class="text-xs text-slate-500" x-text="'第 ' + (i+1) + ' 順位・' + r.pool.card_name"></div>
-              <div class="font-bold" x-text="r.pool.pool_name"></div>
-              <div class="text-xs text-slate-500 mt-1" x-text="r.pool.notes"></div>
+              <div class="text-xs text-ink3">
+                <span class="stamp" x-show="i===0">推</span>
+                <span x-text="'第 ' + (i+1) + ' 順位・' + r.pool.card_name"></span>
+              </div>
+              <div class="font-bold mt-1" x-text="r.pool.pool_name"></div>
+              <div class="text-xs text-ink3 mt-1" x-text="r.pool.notes"></div>
             </div>
             <div class="text-right shrink-0">
-              <div class="text-2xl font-bold text-indigo-700" x-text="'NT$' + Math.round(r.net).toLocaleString()"></div>
-              <div class="text-xs text-slate-500" x-text="'淨利率 ' + (r.netRate*100).toFixed(2) + '%'"></div>
+              <div class="font-type text-2xl font-bold text-seal" x-text="'NT$' + Math.round(r.net).toLocaleString()"></div>
+              <div class="font-type text-xs text-ink3" x-text="'net ' + (r.netRate*100).toFixed(2) + '%'"></div>
             </div>
           </div>
-          <div class="mt-2 text-sm flex flex-wrap gap-x-4 gap-y-1">
-            <span>回饋率 <b x-text="(r.pool.total_rate*100).toFixed(1) + '%'"></b></span>
-            <span x-show="r.pool.cap_spend">剩餘高回饋額度 <b class="text-indigo-700" x-text="'NT$' + Math.round(r.remaining).toLocaleString()"></b></span>
-            <span x-show="!r.pool.cap_spend" class="text-slate-400">無上限</span>
-            <span x-show="r.pool.requires_registration" class="text-amber-600">⚠️ 需先登錄</span>
-            <span x-show="r.pool.requires_switch" class="text-amber-600">⚠️ 需切換方案</span>
+          <div class="mt-2 text-sm flex flex-wrap gap-x-4 gap-y-1 text-ink2">
+            <span>回饋率 <b class="font-type" x-text="(r.pool.total_rate*100).toFixed(1) + '%'"></b></span>
+            <span x-show="r.pool.cap_spend">剩餘高回饋額度 <b class="font-type text-seal" x-text="'NT$' + Math.round(r.remaining).toLocaleString()"></b></span>
+            <span x-show="!r.pool.cap_spend" class="text-ink3">無上限</span>
+            <span x-show="r.pool.requires_registration" class="text-seal">⚠️ 需先登錄</span>
+            <span x-show="r.pool.requires_switch" class="text-seal">⚠️ 需切換方案</span>
           </div>
-          <div x-show="r.splitTip" class="mt-2 text-sm bg-amber-50 border border-amber-200 rounded-xl p-2" x-text="r.splitTip"></div>
+          <div x-show="r.splitTip" class="mt-2 text-sm rounded p-2" style="background:#F2DC5D33;border:1px dashed #B98F63" x-text="r.splitTip"></div>
           <button @click="quickLog(r.pool.pool_id, Math.min(amount, r.remaining === Infinity ? amount : r.remaining))"
-            class="mt-2 text-sm bg-emerald-600 text-white rounded-lg px-3 py-1.5">＋ 記帳此筆</button>
+            class="btn-kraft mt-2 text-sm px-3 py-1.5">＋ 記帳此筆</button>
         </div>
       </template>
     </div>
   </section>
 
   <!-- ============ 額度記帳 ============ -->
-  <section x-show="tab==='ledger'" class="space-y-4" x-cloak>
-    <div class="bg-white rounded-2xl p-4 shadow flex items-center justify-between gap-2">
+  <section x-show="tab==='ledger'" class="space-y-5" x-cloak>
+    <div class="jcard tape-b p-4 flex items-center justify-between gap-2">
       <div>
-        <h2 class="font-bold">當月記帳</h2>
-        <p class="text-sm text-slate-500">記帳月份：<span x-text="state ? state.monthly_ledger.current_month : ''"></span></p>
+        <h2 class="font-disp font-bold">當月記帳</h2>
+        <p class="text-sm text-ink2">記帳月份：<span class="font-type" x-text="state ? state.monthly_ledger.current_month : ''"></span></p>
       </div>
       <div class="flex gap-2 items-center">
-        <input type="month" x-model="resetMonth" class="text-sm border border-slate-300 rounded-lg px-2 py-1.5">
-        <button @click="resetMonth_()" class="text-sm bg-slate-600 text-white rounded-lg px-3 py-1.5">歸零</button>
+        <input type="month" x-model="resetMonth" class="field text-sm px-2 py-1.5">
+        <button @click="resetMonth_()" class="btn-kraft text-sm px-3 py-1.5">歸零</button>
       </div>
     </div>
 
     <template x-for="p in cappedPools()" :key="p.pool_id">
-      <div class="bg-white rounded-2xl p-4 shadow">
+      <div class="jcard tape-c p-4">
         <div class="flex justify-between items-baseline gap-2">
           <div class="min-w-0">
             <div class="font-bold text-sm" x-text="p.card_name"></div>
-            <div class="text-sm" x-text="p.pool_name"></div>
+            <div class="text-sm text-ink2" x-text="p.pool_name"></div>
           </div>
-          <div class="text-right text-sm shrink-0">
-            <span class="font-bold text-indigo-700" x-text="'NT$' + Math.round(spentOf(p.pool_id)).toLocaleString()"></span>
-            <span class="text-slate-400" x-text="' / NT$' + p.cap_spend.toLocaleString()"></span>
+          <div class="text-right text-sm shrink-0 font-type">
+            <span class="font-bold text-seal" x-text="'NT$' + Math.round(spentOf(p.pool_id)).toLocaleString()"></span>
+            <span class="text-ink3" x-text="' / ' + p.cap_spend.toLocaleString()"></span>
           </div>
         </div>
-        <div class="mt-2 h-3 bg-slate-200 rounded-full overflow-hidden">
-          <div class="h-full rounded-full" :class="pctOf(p) >= 100 ? 'bg-red-500' : (pctOf(p) >= 80 ? 'bg-amber-500' : 'bg-indigo-500')"
-            :style="'width:' + Math.min(100, pctOf(p)) + '%'"></div>
+        <div class="mt-2 h-3 rounded-full overflow-hidden" style="background:#E9E0CD">
+          <div class="h-full rounded-full" :style="'width:' + Math.min(100, pctOf(p)) + '%;background:' + (pctOf(p) >= 100 ? '#B3301F' : (pctOf(p) >= 80 ? '#E0B24A' : '#2B4A86'))"></div>
         </div>
-        <div class="mt-1 text-xs text-slate-500 flex justify-between">
+        <div class="mt-1 text-xs text-ink2 flex justify-between">
           <span x-text="pctOf(p) >= 100 ? '⚠️ 已刷滿，超出部分只拿基本回饋' : '剩餘 NT$' + Math.round(p.cap_spend - spentOf(p.pool_id)).toLocaleString()"></span>
-          <button @click="resetPool(p.pool_id)" class="underline">此池歸零</button>
+          <button @click="resetPool(p.pool_id)" class="underline underline-offset-2 text-pen">此池歸零</button>
         </div>
         <div class="mt-2 flex gap-2">
           <input x-model.number="ledgerInputs[p.pool_id]" type="number" min="0" inputmode="numeric" placeholder="金額"
-            class="flex-1 border border-slate-300 rounded-lg px-3 py-2">
+            class="field flex-1 min-w-0 px-3 py-2 font-type">
           <input x-model="ledgerMerchants[p.pool_id]" type="text" placeholder="店家（選填）"
-            class="flex-1 border border-slate-300 rounded-lg px-3 py-2">
-          <button @click="logSpend(p.pool_id)" class="bg-emerald-600 text-white rounded-lg px-4 py-2 text-sm font-bold shrink-0">記帳</button>
+            class="field flex-1 min-w-0 px-3 py-2 text-sm">
+          <button @click="logSpend(p.pool_id)" class="btn-seal px-4 py-2 text-sm font-bold shrink-0">記帳</button>
         </div>
       </div>
     </template>
 
-    <div class="bg-white rounded-2xl p-4 shadow">
-      <h2 class="font-bold mb-2">交易明細</h2>
-      <p x-show="!state || !state.monthly_ledger.transactions.length" class="text-sm text-slate-400">本月還沒有記帳</p>
-      <ul class="divide-y divide-slate-100 text-sm">
+    <div class="jcard tape-d p-4">
+      <h2 class="font-disp font-bold mb-2">交易明細</h2>
+      <p x-show="!state || !state.monthly_ledger.transactions.length" class="text-sm text-ink3">本月還沒有記帳</p>
+      <ul class="divide-y divide-dashed divide-line text-sm">
         <template x-for="t in (state ? state.monthly_ledger.transactions : [])" :key="t.id">
           <li class="py-2 flex justify-between items-center gap-2">
-            <div>
-              <span class="text-slate-500" x-text="t.date"></span>
+            <div class="min-w-0">
+              <span class="font-type text-ink3" x-text="t.date"></span>
               <span class="font-bold" x-text="poolName(t.pool_id)"></span>
-              <span class="text-slate-500" x-show="t.merchant" x-text="'・' + t.merchant"></span>
+              <span class="text-ink3" x-show="t.merchant" x-text="'・' + t.merchant"></span>
             </div>
             <div class="flex items-center gap-2 shrink-0">
-              <span class="font-bold" x-text="'NT$' + t.amount.toLocaleString()"></span>
-              <button @click="delTx(t.id)" class="text-red-500 text-xs underline">刪除</button>
+              <span class="font-type font-bold" x-text="'NT$' + t.amount.toLocaleString()"></span>
+              <button @click="delTx(t.id)" class="text-seal text-xs underline underline-offset-2">刪除</button>
             </div>
           </li>
         </template>
@@ -164,50 +218,50 @@
   </section>
 
   <!-- ============ 卡片管理 ============ -->
-  <section x-show="tab==='cards'" class="space-y-4" x-cloak>
-    <div class="bg-white rounded-2xl p-4 shadow">
-      <h2 class="font-bold mb-2">我的卡片</h2>
-      <ul class="divide-y divide-slate-100">
+  <section x-show="tab==='cards'" class="space-y-5" x-cloak>
+    <div class="jcard tape-c p-4">
+      <h2 class="font-disp font-bold mb-2">我的卡片</h2>
+      <ul class="divide-y divide-dashed divide-line">
         <template x-for="c in (state ? state.active_cards : [])" :key="c.card_id">
           <li class="py-2 flex items-center justify-between gap-2">
-            <div class="text-sm">
+            <div class="text-sm min-w-0">
               <div class="font-bold" x-text="c.bank + '・' + c.name"></div>
-              <div class="text-xs text-slate-500" x-text="'結帳日 ' + c.statement_day + ' 號'"></div>
+              <div class="font-type text-xs text-ink3" x-text="'結帳日 ' + c.statement_day + ' 號'"></div>
             </div>
             <div class="flex items-center gap-2 shrink-0">
               <button @click="c.enabled = !c.enabled; saveState()"
-                :class="c.enabled ? 'bg-emerald-500' : 'bg-slate-300'"
+                :style="'background:' + (c.enabled ? '#2F6B4F' : '#DCCFB8')"
                 class="relative w-11 h-6 rounded-full transition">
-                <span class="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all"
+                <span class="absolute top-0.5 w-5 h-5 bg-[#FBF7EC] rounded-full shadow transition-all"
                   :class="c.enabled ? 'left-[22px]' : 'left-0.5'"></span>
               </button>
-              <button @click="delCard(c.card_id)" class="text-red-500 text-xs underline">刪除</button>
+              <button @click="delCard(c.card_id)" class="text-seal text-xs underline underline-offset-2">刪除</button>
             </div>
           </li>
         </template>
       </ul>
-      <div class="mt-3 pt-3 border-t border-slate-100 space-y-2">
+      <div class="mt-3 pt-3 border-t border-dashed border-line space-y-2">
         <h3 class="font-bold text-sm">新增卡片</h3>
         <div class="flex gap-2">
-          <input x-model="newCard.bank" placeholder="銀行" class="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm">
-          <input x-model="newCard.name" placeholder="卡名" class="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm">
-          <input x-model.number="newCard.statement_day" type="number" placeholder="結帳日" class="w-20 border border-slate-300 rounded-lg px-3 py-2 text-sm">
+          <input x-model="newCard.bank" placeholder="銀行" class="field flex-1 min-w-0 px-3 py-2 text-sm">
+          <input x-model="newCard.name" placeholder="卡名" class="field flex-1 min-w-0 px-3 py-2 text-sm">
+          <input x-model.number="newCard.statement_day" type="number" placeholder="結帳日" class="field w-20 px-3 py-2 text-sm font-type">
         </div>
-        <button @click="addCard()" class="text-sm bg-indigo-600 text-white rounded-lg px-4 py-2 font-bold">＋ 新增</button>
-        <p class="text-xs text-slate-400">新增卡片後，隔天 09:00 排程會自動把它納入權益巡檢並補上加碼池。</p>
+        <button @click="addCard()" class="btn-seal text-sm px-4 py-2 font-bold">＋ 新增</button>
+        <p class="text-xs text-ink3">新增卡片後，隔天 09:00 排程會自動把它納入權益巡檢並補上加碼池。</p>
       </div>
     </div>
 
-    <div class="bg-white rounded-2xl p-4 shadow space-y-3">
-      <h2 class="font-bold">銀行帳戶等級</h2>
+    <div class="jcard tape-a p-4 space-y-3">
+      <h2 class="font-disp font-bold">銀行帳戶等級</h2>
       <template x-for="(v, k) in tiersDraft" :key="k">
         <div>
           <label class="text-sm font-bold" x-text="k"></label>
-          <textarea x-model="tiersDraft[k]" rows="2" class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 mt-1"></textarea>
+          <textarea x-model="tiersDraft[k]" rows="2" class="field w-full text-sm px-3 py-2 mt-1"></textarea>
         </div>
       </template>
-      <button @click="saveTiers()" class="text-sm bg-indigo-600 text-white rounded-lg px-4 py-2 font-bold">儲存等級</button>
-      <p class="text-xs text-slate-400">例如星展存滿 30 萬，直接改這裡，隔天排程會自動解鎖對應權益。</p>
+      <button @click="saveTiers()" class="btn-seal text-sm px-4 py-2 font-bold">儲存等級</button>
+      <p class="text-xs text-ink3">例如星展存滿 30 萬，直接改這裡，隔天排程會自動解鎖對應權益。</p>
     </div>
   </section>
 
@@ -215,29 +269,29 @@
 
 <!-- 設定視窗 -->
 <div x-show="showSettings" class="fixed inset-0 z-30 flex items-end sm:items-center justify-center" x-cloak>
-  <div class="absolute inset-0 bg-black/40" @click="showSettings = false"></div>
-  <div class="relative bg-white w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl p-5 space-y-3">
-    <h2 class="font-bold text-lg">⚙️ GitHub 連線設定</h2>
-    <p class="text-xs text-slate-500">輸入一次即可，token 只存在這台裝置的瀏覽器裡，不會上傳到任何地方。需要 Contents 讀寫權限的 fine-grained token。</p>
+  <div class="absolute inset-0 bg-[#3B2F25]/50" @click="showSettings = false"></div>
+  <div class="jcard tape-b relative w-full sm:max-w-md p-5 space-y-3" style="border-radius:6px">
+    <h2 class="font-disp font-bold text-lg">⚙️ GitHub 連線設定</h2>
+    <p class="text-xs text-ink2">輸入一次即可，token 只存在這台裝置的瀏覽器裡，不會上傳到任何地方。需要 Contents 讀寫權限的 fine-grained token。</p>
     <label class="block text-sm">Owner
-      <input x-model="settings.owner" class="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2">
+      <input x-model="settings.owner" class="field mt-1 w-full px-3 py-2">
     </label>
     <label class="block text-sm">Repo
-      <input x-model="settings.repo" class="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2">
+      <input x-model="settings.repo" class="mt-1 w-full field px-3 py-2">
     </label>
     <label class="block text-sm">Personal Access Token
-      <input x-model="settings.token" type="password" class="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2" placeholder="github_pat_...">
+      <input x-model="settings.token" type="password" class="field mt-1 w-full px-3 py-2 font-type" placeholder="github_pat_...">
     </label>
     <div class="flex gap-2">
-      <button @click="saveSettings()" class="flex-1 bg-indigo-600 text-white rounded-lg px-4 py-2 font-bold">儲存</button>
-      <button @click="testConn()" class="flex-1 bg-slate-200 rounded-lg px-4 py-2">測試連線</button>
-      <button @click="showSettings = false" class="px-4 py-2 text-slate-500">關閉</button>
+      <button @click="saveSettings()" class="btn-seal flex-1 px-4 py-2 font-bold">儲存</button>
+      <button @click="testConn()" class="btn-kraft flex-1 px-4 py-2">測試連線</button>
+      <button @click="showSettings = false" class="px-4 py-2 text-ink3">關閉</button>
     </div>
   </div>
 </div>
 
 <!-- 提示 -->
-<div x-show="toastMsg" x-transition class="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-800 text-white text-sm rounded-xl px-4 py-2.5 shadow-lg max-w-[90%]" x-text="toastMsg" x-cloak></div>
+<div x-show="toastMsg" x-transition class="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 text-sm px-4 py-2.5 max-w-[90%] jcard tape-a font-kai" x-text="toastMsg" x-cloak></div>
 
 <script>
 const SCENARIOS = ['新加坡實體','日本實體','韓國實體','歐美實體','國內一般','國外一般','國內網購','餐廳聚餐','旅遊訂房','行動支付'];
