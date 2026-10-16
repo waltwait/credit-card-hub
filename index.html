@@ -182,7 +182,7 @@ tailwind.config = {
 
   <!-- ============ 額度記帳 ============ -->
   <section x-show="tab==='ledger'" class="space-y-5" x-cloak>
-    <div class="jcard tape-b p-4 flex items-center justify-between gap-2">
+    <div class="jcard tape-b p-4 flex items-center justify-between gap-2 flex-wrap">
       <div>
         <h2 class="font-disp font-bold">當月記帳</h2>
         <p class="text-sm text-ink2">記帳月份：<span class="font-type" x-text="state ? state.monthly_ledger.current_month : ''"></span></p>
